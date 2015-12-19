@@ -1,0 +1,166 @@
+
+<html>
+<head>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+</head>
+  
+<h1 style="text-decoration: underline;">Christmas Time Config</h1>
+
+<p>Temperature select:
+<select id="temp_select">
+<option value="F">F</option>
+<option value="C">C</option>
+</select>
+</p>
+
+<p>Weather source:
+<select id="weatherSource">
+<option>GPS</option>
+<option>No GPS</option>
+</select>
+</p>
+
+<div class="noGPSclass">
+<p>ZIP code for weather
+<input type = "text" id="zip" >
+<button type = "button" id="zip_button">Submit</button>  
+
+<p id="latitude">Latitude:</p>
+<p id="longitude">Longitude:</p>
+</div>
+  
+<p>Background color select:
+<select id="Background_select">
+<option value="w">white</option>
+<option value="b">black</option>
+</select>
+</p>
+
+<p>Please make a donation if you can for new developments.
+Thanks! 
+<p>
+<img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/pp-acceptance-small.png" alt="Buy now with PayPal" />
+<a href="https://www.paypal.me/JJH4">-=DONATE=-</a> 
+<img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/pp-acceptance-small.png" alt="Buy now with PayPal" />
+
+<p> <button id="save_button">Save</button> </p>
+
+
+<script>
+var sLatitude = "";
+var sLongitude = "";
+
+var tempSelect = document.getElementById("temp_select");
+var BackgroundSelect = document.getElementById("Background_select");
+var isGPS = document.getElementById("weatherSource");
+var latitude = document.getElementById('latitude');
+var longitude = document.getElementById('longitude');
+var zip = document.getElementById('zip');
+  
+$(".noGPSclass").hide();
+
+$(document).ready(function(){
+  // Load any previously saved configuration, if available
+    if(localStorage['tempUnits']) {
+	
+	  tempSelect.value = localStorage['tempUnits'];
+      BackgroundSelect.value = localStorage['Background'];
+      isGPS.value = localStorage['isGPS'];
+      latitude.innerHTML = localStorage['latitude'];
+      longitude.innerHTML = localStorage['longitude'];
+      zip.value = localStorage['zip'];
+	  
+	  if ($('#weatherSource>option:selected').text() === "No GPS"){
+		 $(".noGPSclass").fadeIn();
+	  }
+      
+    }
+	})
+
+  //----------------------------------------
+  $("#zip_button").click(function(){
+    //console.log("zip button clicked");
+    var geocoder = new google.maps.Geocoder();
+    geocoder.geocode( { 'address': $('#zip').val()}, function(results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+	 sLatitude = results[0].geometry.location.lat();
+	 sLongitude = results[0].geometry.location.lng();
+	 $("#latitude").text(sLatitude);
+	 $("#longitude").text(sLongitude);
+      } else {
+	$("#latitude").text("Latitude: ERROR");
+	$("#longitude").text("Longitude: ERROR");
+      }
+    });
+  });
+  
+  $("#weatherSource").change(function(){
+    console.log("weather source changed to " + $('#weatherSource>option:selected').text());
+    if ($('#weatherSource>option:selected').text() === "No GPS") {
+      $(".noGPSclass").fadeIn();
+    }
+    else
+    {
+      $(".noGPSclass").fadeOut();
+    }
+   
+  })
+  
+  var options = {
+      "tempUnits": 0,
+      "Background": 0,
+      "isGPS": 0,
+      "latitude": "",
+      "longitude": "",
+      "zip": ""
+    };
+  
+  //Setup to allow easy adding more options later
+  function saveOptions() {
+    options = {
+      "tempUnits": tempSelect.options[tempSelect.selectedIndex].value,
+      "Background": BackgroundSelect.options[BackgroundSelect.selectedIndex].value,
+      "isGPS": isGPS.options[isGPS.selectedIndex].value,
+      "latitude": latitude.innerHTML,
+      "longitude": longitude.innerHTML,
+      "zip": zip.value
+    }
+	
+	// Save for next launch
+    localStorage['tempUnits'] = options['tempUnits'];
+    localStorage['Background'] = options['Background'];
+	localStorage['isGPS'] = options['isGPS'];
+    localStorage['latitude'] = options['latitude'];
+	localStorage['longitude'] = options['longitude'];
+    localStorage['zip'] = options['zip'];
+    return options;
+  };
+  
+  function getQueryParam(variable, defaultValue) {
+    var query = location.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+      var pair = vars[i].split('=');
+      if (pair[0] === variable) {
+        return decodeURIComponent(pair[1]);
+      }
+    }
+    return defaultValue || false;
+  }
+ //------------------------------------------------		
+  var submitButton = document.getElementById("save_button");
+  submitButton.addEventListener("click", 
+    function() {
+      console.log("Submit");
+ 
+      options.get = saveOptions();
+	  
+	  // Set the return URL depending on the runtime environment
+      var return_to = getQueryParam('return_to', 'pebblejs://close#');
+      document.location = return_to + encodeURIComponent(JSON.stringify(options)); 
+    });
+  
+</script>
+</body>
+</html>
